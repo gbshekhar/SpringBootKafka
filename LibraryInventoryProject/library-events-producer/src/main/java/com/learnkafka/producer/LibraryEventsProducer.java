@@ -23,11 +23,11 @@ import java.util.concurrent.TimeoutException;
 public class LibraryEventsProducer {
 
     @Value("${spring.kafka.topic}")
-    public String topic;
+    private String topic;
 
     private final KafkaTemplate<Integer, String> kafkaTemplate;
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public LibraryEventsProducer(KafkaTemplate<Integer, String> kafkaTemplate, ObjectMapper objectMapper){
         this.kafkaTemplate = kafkaTemplate;
