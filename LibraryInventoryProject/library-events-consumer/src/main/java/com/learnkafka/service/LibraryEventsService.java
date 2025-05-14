@@ -7,6 +7,7 @@ import com.learnkafka.repository.LibraryEventsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -42,6 +43,10 @@ public class LibraryEventsService {
     private  void validate(LibraryEvent libraryEvent){
         if(libraryEvent.getLibraryEventId() == null){
             throw new IllegalArgumentException("Library Event Id is missing");
+        }
+
+        if(libraryEvent.getLibraryEventId() == 999){
+            throw new RecoverableDataAccessException("Temporary Network Issue");
         }
 
         Optional<LibraryEvent> libraryEventOptional = repository.findById(libraryEvent.getLibraryEventId());

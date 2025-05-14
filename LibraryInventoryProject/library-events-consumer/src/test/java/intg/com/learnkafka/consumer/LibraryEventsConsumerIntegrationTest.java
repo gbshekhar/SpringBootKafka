@@ -71,7 +71,7 @@ public class LibraryEventsConsumerIntegrationTest {
         libraryEventsRepository.deleteAll();
     }
 
-    //Junit Test for
+    //Junit Test for New Library Event
     @Test
     public void publishNewLibraryEvent() throws ExecutionException, InterruptedException, JsonProcessingException {
         //given - precondition or setup
@@ -93,13 +93,14 @@ public class LibraryEventsConsumerIntegrationTest {
         });
     }
 
-    //Junit Test for
+    //Junit Test for Update Library Event : positive scenario
     @Test
     public void publishUpdateLibraryEvent() throws JsonProcessingException, InterruptedException {
         //given - precondition or setup
         String json = " {\"libraryEventId\":null,\"libraryEventType\":\"NEW\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Dilip\"}}";
         LibraryEvent libraryEvent = objectMapper.readValue(json, LibraryEvent.class);
         libraryEvent.getBook().setLibraryEvent(libraryEvent);
+        this.libraryEventsRepository.save(libraryEvent);
         //publish update library event
         Book  book = Book.builder().bookId(456).bookName("xyz").bookAuthor("shekhar").build();
         libraryEvent.setLibraryEventType(LibraryEventType.UPDATE);
@@ -112,9 +113,26 @@ public class LibraryEventsConsumerIntegrationTest {
         latch.await(3, TimeUnit.SECONDS);
 
         //then - verify output
-        //verify(libraryEventsConsumerSpy, times(1)).onMessage(isA(ConsumerRecord.class));
-        //verify(libraryEventsServiceSpy, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
-        //LibraryEvent persistedLibraryEvent = libraryEventsRepository.findById(libraryEvent.getLibraryEventId()).get();
-        //assertEquals("xyz", persistedLibraryEvent.getBook().getBookName());
+        verify(libraryEventsConsumerSpy, times(1)).onMessage(isA(ConsumerRecord.class));
+        verify(libraryEventsServiceSpy, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
+        LibraryEvent persistedLibraryEvent = libraryEventsRepository.findById(libraryEvent.getLibraryEventId()).get();
+        assertEquals("xyz", persistedLibraryEvent.getBook().getBookName());
+    }
+
+    //Junit Test for Update Library Event : Negative Scenario
+    @Test
+    public void publishUpdateLibraryEvent_null_LibraryEvent() throws JsonProcessingException, InterruptedException {
+        //given - precondition or setup
+        String json = " {\"libraryEventId\":null,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Dilip\"}}";
+        kafkaTemplate.sendDefault(json);
+
+        //when  - action or behaviour that we are going to test
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(5, TimeUnit.SECONDS);
+
+        //then - verify output
+        //By Default retry is 10 times but we can override this configuration
+        verify(libraryEventsConsumerSpy, times(1)).onMessage(isA(ConsumerRecord.class));
+        verify(libraryEventsServiceSpy, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
     }
 }

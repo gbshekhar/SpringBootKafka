@@ -39,9 +39,9 @@ public class LibraryEventsProducer {
         var key = libraryEvent.libraryEventId();
         var data = objectMapper.writeValueAsString(libraryEvent);
 
-        //1.Blocking call - get metadata about the Kafka Cluster
+        //1.Blocking call - get metadata about the Kafka Cluster; max time it can wait to receive response is max.block.ms and default value is 6seconds
         //Note: This call happens only one time after the server starts
-        //2.Send message happens - Returns a CompletableFuture
+        //2.Send message happens - Returns a CompletableFuture; in case if this call fails based on retires property it will try that many times
         var completableFuture = kafkaTemplate.send(topic, key, data);
         return completableFuture.whenComplete((sendResult, throwable) -> {
              if(throwable != null){
